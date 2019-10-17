@@ -1,5 +1,9 @@
 # Cryptoxide
 
+## Build
+
+    wasm-pack build
+
 [![Build Status](https://travis-ci.org/typed-io/rust-cardano.svg?branch=master)](https://travis-ci.org/typed-io/rust-cardano)
 ![MIT or APACHE-2 licensed](https://img.shields.io/badge/licensed-MIT%20or%20APACHE--2-blue.svg)
 
