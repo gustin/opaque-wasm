@@ -1,5 +1,12 @@
 # ![wasm-crypto](https://raw.github.com/jedisct1/wasm-crypto/master/logo.png)
 
+## Installation
+
+    npm install
+    npm run asbuild:untouched
+
+
+
 A WebAssembly (via AssemblyScript) set of cryptographic primitives for building authentication and key exchange protocols.
 
 Currently provides:
