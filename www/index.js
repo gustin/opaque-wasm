@@ -1,3 +1,4 @@
-import * as wasm from "plaintext_wasm";
+import * as plaintext from "plaintext_wasm";
 
-wasm.greet();
+plaintext.init();
+plaintext.registration_init("bubba", "racoontail");

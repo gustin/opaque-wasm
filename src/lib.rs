@@ -6,6 +6,7 @@ use ed25519_dalek::{Keypair};
 use opaque::*;
 use rand_os::OsRng;
 use sha3::{Digest, Sha3_512};
+use std::panic;
 
 #[wasm_bindgen]
 extern {
@@ -15,6 +16,11 @@ extern {
 #[wasm_bindgen]
 pub fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
+}
+
+#[wasm_bindgen]
+pub fn init() {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
 #[wasm_bindgen]
@@ -34,6 +40,7 @@ pub fn registration_init(username: &str, password: &str) {
     let alpha: RistrettoPoint = hash_prime * r;
     let (beta, v, pub_s) = registration_1(username, &alpha);
 
+    alert(&format!("Beta, {:?}!", beta));
 }
 
 
