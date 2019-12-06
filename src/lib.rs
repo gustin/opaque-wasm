@@ -105,8 +105,8 @@ pub fn registration_init(username: &str, password: &str) {
 //    let (beta_a, v_a, envelope_a, ke_2, y) =
 //        authenticate_1(username, &alpha_a, &ke_1);
 
-    let (beta_a, v_a, envelope_a) =
-        authenticate_1(username, &alpha_a);
+//    let (beta_a, v_a, envelope_a) =
+ //       authenticate_2(username, &alpha_a);
 }
 
 
