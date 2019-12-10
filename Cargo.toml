@@ -13,14 +13,30 @@ bincode = "1.2.0"
 console_error_panic_hook = "0.1.1"
 curve25519-dalek = "1.2.3"
 ed25519-dalek = "1.0.0-pre.1"
+futures = "0.3.1"
 hex = "0.4.0"
 hkdf = "0.8.0"
 hmac = "0.7.1"
+js-sys = "0.3.32"
 rand_os = "0.1.3"
+serde = { version = "1.0.80", features = ["derive"] }
+serde_derive = "^1.0.59"
 sha2 = "0.8.0"
 sha3 = "0.8.2"
-wasm-bindgen = "0.2"
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+wasm-bindgen-futures = "0.4.5"
 typenum = "1.11.2"
+
+[dependencies.web-sys]
+version = "0.3.32"
+features = [
+  'Headers',
+  'Request',
+  'RequestInit',
+  'RequestMode',
+  'Response',
+  'Window',
+]
 
 [dependencies.opaque]
 features = ["nightly"]
