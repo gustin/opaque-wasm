@@ -83,7 +83,7 @@ pub async fn registration_init(
     opts.mode(RequestMode::Cors);
 
     let request = Request::new_with_str_and_init(
-        "https://localhost:3000/authenticate",
+        "http://localhost:8000/authenticate/new",
         &opts,
     ).unwrap();
 
