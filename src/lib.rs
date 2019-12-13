@@ -46,10 +46,7 @@ pub fn init() {
 }
 
 #[wasm_bindgen]
-pub async fn registration_init(
-    username: String,
-    password: String,
-) {
+pub async fn registration_init(username: String, password: String) {
     // opaque client code, call function in lib for now
     // client_registration_values
     // then package and post to a url
@@ -65,37 +62,55 @@ pub async fn registration_init(
     let r = Scalar::random(&mut cspring);
     let hash_prime =
         RistrettoPoint::hash_from_bytes::<Sha3_512>(password.as_bytes());
-    let alpha: RistrettoPoint = hash_prime * r;
+    let alpha_point: RistrettoPoint = hash_prime * r;
 
     //1. call registration 1 on a route with values
     // POST: /authenticate/
     // username
     // alpha
     // sign eventually?
-//    let (beta, v, pub_s) =
-//        registration_1(username, &alpha.compress().to_bytes());
-
+    //    let (beta, v, pub_s) =
+    //        registration_1(username, &alpha.compress().to_bytes());
 
     // POST username/alpha to http://localhost:8000/authenticate
+
+    let alpha = alpha_point.compress().to_bytes();
 
     let mut opts = RequestInit::new();
     opts.method("POST");
     opts.mode(RequestMode::Cors);
+    let body = format!(
+        r#"
+        {{
+            "username": "{}",
+            "alpha": "{:?}"
+        }}
+        "#,
+        username, alpha
+    );
+    opts.body(Some(&JsValue::from_str(&body)));
 
     let request = Request::new_with_str_and_init(
         "http://localhost:8000/authenticate/new",
         &opts,
-    ).unwrap();
+    )
+    .unwrap();
 
+    /*    request
+            .headers()
+            .set("Content-Type", "application/json")
+            .unwrap();
+    */
     let window = web_sys::window().unwrap();
-    let resp_value =
-        JsFuture::from(window.fetch_with_request(&request)).await.unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
 
     let resp: Response = resp_value.dyn_into().unwrap();
     let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
 
     let info: Registration = json.into_serde().unwrap();
-     let js_value = JsValue::from_serde(&info).unwrap();
+    let js_value = JsValue::from_serde(&info).unwrap();
     /*
         let beta_point = CompressedRistretto::from_slice(&beta[..]);
         let beta = beta_point.decompress().unwrap();
