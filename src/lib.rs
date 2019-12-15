@@ -162,12 +162,13 @@ pub async fn registration_init(username: String, password: String) {
         env_cipher
     );
 
+    // serialize from struct for safety
     let body = format!(
         r#"
         {{
-            "username": {:?},
-            "pub_u": {:?}",
-            "auth_env": {:?},
+            "username": "{}",
+            "pub_u": {:?},
+            "auth_env": {:?}
         }}
         "#,
         username, pub_u, env_cipher
@@ -178,7 +179,7 @@ pub async fn registration_init(username: String, password: String) {
     opts.body(Some(&JsValue::from_str(&body)));
 
     let request = Request::new_with_str_and_init(
-        "http://localhost:8000/authenticate/new",
+        "http://localhost:8000/authenticate/final",
         &opts,
     )
     .unwrap();
