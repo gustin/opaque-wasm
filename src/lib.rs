@@ -116,53 +116,82 @@ pub async fn registration_init(username: String, password: String) {
     let result: Data = json.into_serde().unwrap();
     log!("Beta: {:?}", result.beta);
 
-    let js_value = JsValue::from_serde(&result).unwrap();
+    let beta_point = CompressedRistretto::from_slice(&result.beta[..]);
+    let beta = beta_point.decompress().unwrap();
+    let v_point = CompressedRistretto::from_slice(&result.v[..]);
+    let v = v_point.decompress().unwrap();
 
-    /*
-        let beta_point = CompressedRistretto::from_slice(&beta[..]);
-        let beta = beta_point.decompress().unwrap();
-        let v_point = CompressedRistretto::from_slice(&v[..]);
-        let v = v_point.decompress().unwrap();
+    log!("Rando: {:?}", keypair.secret.to_bytes());
 
-        alert(&format!("Rando: {:?}", keypair.secret.to_bytes()));
+    let inverse_r = r.invert();
+    let sub_beta = beta * inverse_r;
 
-        let inverse_r = r.invert();
-        let sub_beta = beta * inverse_r;
+    let mut hasher = Sha3_512::new();
+    // assuming multiple inputs create a unique hash not just concating, verse serializing
+    hasher.input(password.as_bytes());
+    hasher.input(v.compress().as_bytes());
+    hasher.input(sub_beta.compress().to_bytes());
+    let rwd_u = hasher.result();
 
-        let mut hasher = Sha3_512::new();
-        // assuming multiple inputs create a unique hash not just concating, verse serializing
-        hasher.input(password.as_bytes());
-        hasher.input(v.compress().as_bytes());
-        hasher.input(sub_beta.compress().to_bytes());
-        let rwd_u = hasher.result();
+    log!("-) RwdU: {:?}:", rwd_u);
 
-        alert(&format!("-) RwdU: {:?}:", rwd_u));
+    // => Registration 2
 
-        // => Registration 2
+    let envelope = Envelope {
+        priv_u: priv_u,
+        pub_u: pub_u,
+        pub_s: result.pub_s,
+    };
 
-        let envelope = Envelope {
-            priv_u: priv_u,
-            pub_u: pub_u,
-            pub_s: pub_s,
-        };
+    let hkdf = Hkdf::<Sha512>::new(None, &rwd_u);
+    let mut output_key_material = [0u8; 44]; // 32 byte key + 96 bit nonce
+    let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap(); // NOTE: check info value
+    hkdf.expand(&info, &mut output_key_material).unwrap();
 
-        let hkdf = Hkdf::<Sha512>::new(None, &rwd_u);
-        let mut output_key_material = [0u8; 44]; // 32 byte key + 96 bit nonce
-        let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap(); // NOTE: check info value
-        hkdf.expand(&info, &mut output_key_material).unwrap();
+    let encryption_key: GenericArray<u8, typenum::U32> =
+        GenericArray::clone_from_slice(&output_key_material[0..32]);
+    let aead = Aes256GcmSiv::new(encryption_key);
+    let nonce: GenericArray<u8, typenum::U12> =
+        GenericArray::clone_from_slice(&output_key_material[32..44]);
 
-        let encryption_key: GenericArray<u8, typenum::U32> =
-            GenericArray::clone_from_slice(&output_key_material[0..32]);
-        let aead = Aes256GcmSiv::new(encryption_key);
-        let nonce: GenericArray<u8, typenum::U12> =
-            GenericArray::clone_from_slice(&output_key_material[32..44]);
+    let payload: Vec<u8> = bincode::serialize(&envelope).unwrap();
+    let env_cipher = aead.encrypt(&nonce, payload.as_slice()).unwrap();
 
-        let payload: Vec<u8> = bincode::serialize(&envelope).unwrap();
-        let env_cipher = aead.encrypt(&nonce, payload.as_slice()).unwrap();
+    log!(
+        "-) AuthEnv: AES-GCM-SIV Cipher Envelope {:?} :",
+        env_cipher
+    );
 
-        alert(&format!("-) AuthEnv: AES-GCM-SIV Cipher Envelope {:?} :", env_cipher));
+    let body = format!(
+        r#"
+        {{
+            "username": {:?},
+            "pub_u": {:?}",
+            "auth_env": {:?},
+        }}
+        "#,
+        username, pub_u, env_cipher
+    );
+    let mut opts = RequestInit::new();
+    opts.method("POST");
+    opts.mode(RequestMode::Cors);
+    opts.body(Some(&JsValue::from_str(&body)));
 
+    let request = Request::new_with_str_and_init(
+        "http://localhost:8000/authenticate/new",
+        &opts,
+    )
+    .unwrap();
 
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
+
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
+
+    let j_string = JSON::stringify(&json).unwrap();
+    log!("{:?}", j_string.as_string().unwrap())    /*
         // => Authentication 1
 
         let r_a = Scalar::random(&mut cspring);
