@@ -10,7 +10,7 @@ use ed25519_dalek::Keypair;
 use futures::{future, Future};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
-use js_sys::Promise;
+use js_sys::{Promise, JSON};
 use opaque::*;
 use rand_os::OsRng;
 use serde::{Deserialize, Serialize};
@@ -23,8 +23,14 @@ use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Registration {
+pub struct Data {
     pub beta: [u8; 32],
     pub v: [u8; 32],
     pub pub_s: [u8; 32],
@@ -96,11 +102,6 @@ pub async fn registration_init(username: String, password: String) {
     )
     .unwrap();
 
-    /*    request
-            .headers()
-            .set("Content-Type", "application/json")
-            .unwrap();
-    */
     let window = web_sys::window().unwrap();
     let resp_value = JsFuture::from(window.fetch_with_request(&request))
         .await
@@ -109,8 +110,14 @@ pub async fn registration_init(username: String, password: String) {
     let resp: Response = resp_value.dyn_into().unwrap();
     let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
 
-    let info: Registration = json.into_serde().unwrap();
-    let js_value = JsValue::from_serde(&info).unwrap();
+    let j_string = JSON::stringify(&json).unwrap();
+    log!("{:?}", j_string.as_string().unwrap());
+
+    let result: Data = json.into_serde().unwrap();
+    log!("Beta: {:?}", result.beta);
+
+    let js_value = JsValue::from_serde(&result).unwrap();
+
     /*
         let beta_point = CompressedRistretto::from_slice(&beta[..]);
         let beta = beta_point.decompress().unwrap();
