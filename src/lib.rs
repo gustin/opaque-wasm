@@ -83,7 +83,7 @@ pub async fn registration_init(username: String, password: String) {
         r#"
         {{
             "username": "{}",
-            "alpha": "{:?}"
+            "alpha": {:?}
         }}
         "#,
         username, alpha
