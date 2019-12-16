@@ -30,10 +30,19 @@ macro_rules! log {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Data {
+pub struct RegData {
     pub beta: [u8; 32],
     pub v: [u8; 32],
     pub pub_s: [u8; 32],
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthData {
+    pub beta: [u8; 32],
+    pub v: [u8; 32],
+    pub envelope: Vec<u8>,
+    pub key: [u8; 32],
+    pub y: [u8; 32]
 }
 
 #[wasm_bindgen]
@@ -113,7 +122,7 @@ pub async fn registration_init(username: String, password: String) {
     let j_string = JSON::stringify(&json).unwrap();
     log!("{:?}", j_string.as_string().unwrap());
 
-    let result: Data = json.into_serde().unwrap();
+    let result: RegData = json.into_serde().unwrap();
     log!("Beta: {:?}", result.beta);
 
     let beta_point = CompressedRistretto::from_slice(&result.beta[..]);
@@ -192,25 +201,71 @@ pub async fn registration_init(username: String, password: String) {
     let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
 
     let j_string = JSON::stringify(&json).unwrap();
-    log!("{:?}", j_string.as_string().unwrap())    /*
-        // => Authentication 1
+    log!("{:?}", j_string.as_string().unwrap());
 
-        let r_a = Scalar::random(&mut cspring);
-        let hash_prime_a =
-            RistrettoPoint::hash_from_bytes::<Sha3_512>(password.as_bytes());
-        let alpha_a: RistrettoPoint = hash_prime_a * r_a;
+    //**
+    // => Authentication 1
 
-        let x = Scalar::random(&mut cspring);
-        let ke_1 = RISTRETTO_BASEPOINT_POINT * x;
-        let nA = "";
-        let sidA = 1;
+    log!("Starting Authentication...");
 
-    //    let (beta_a, v_a, envelope_a, ke_2, y) =
-    //        authenticate_1(username, &alpha_a, &ke_1);
+    let r_a = Scalar::random(&mut cspring);
+    let hash_prime_a =
+        RistrettoPoint::hash_from_bytes::<Sha3_512>(password.as_bytes());
+    let alpha_point: RistrettoPoint = hash_prime_a * r_a;
+
+    let x = Scalar::random(&mut cspring);
+    let ke_1_point = RISTRETTO_BASEPOINT_POINT * x;
+    let nA = "";
+    //let sidA = 1;
+
+    let alpha = alpha_point.compress().to_bytes();
+    let ke_1 = ke_1_point.compress().to_bytes();
+
+    let mut opts = RequestInit::new();
+    opts.method("POST");
+    opts.mode(RequestMode::Cors);
+    let body = format!(
+        r#"
+        {{
+            "username": "{}",
+            "alpha": {:?},
+            "key": {:?}
+        }}
+        "#,
+        username, alpha, ke_1
+    );
+    opts.body(Some(&JsValue::from_str(&body)));
+
+    let request = Request::new_with_str_and_init(
+        "http://localhost:8000/authenticate/start",
+        &opts,
+    )
+    .unwrap();
+
+    let window = web_sys::window().unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
+
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
+
+    let j_string = JSON::stringify(&json).unwrap();
+    log!("{:?}", j_string.as_string().unwrap());
+
+    let result: AuthData = json.into_serde().unwrap();
+    log!("Beta: {:?}", result.beta);
+    log!("V: {:?}", result.v);
+    log!("Envelope: {:?}", result.envelope);
+    log!("Key Exchange 2: {:?}", result.key);
+    log!("Y: {:?}", result.y);
+
+
+
 
     //    let (beta_a, v_a, envelope_a) =
      //       authenticate_2(username, &alpha_a);
-     */
+
 }
 
 #[cfg(test)]
