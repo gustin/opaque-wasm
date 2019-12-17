@@ -2,7 +2,11 @@
 
 
 
+# Packing
 
+    ./scripts/pack-it.sh
+
+  Reference to 'wasm-pack' build options: https://rustwasm.github.io/docs/wasm-pack/commands/build.html
 
 ## Nightly
 
