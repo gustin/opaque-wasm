@@ -47,17 +47,7 @@ pub struct AuthData {
 }
 
 #[wasm_bindgen]
-extern "C" {
-    pub fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet(name: &str) {
-    alert(&format!("Hello, {}!", name));
-}
-
-#[wasm_bindgen]
-pub fn init() {
+pub fn setup() {
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 

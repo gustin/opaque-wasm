@@ -1,5 +1,5 @@
 [package]
-name = "plaintext_wasm"
+name = "plaintext-wasm"
 version = "0.1.0"
 authors = ["gustin <gustin@users.noreply.github.com>"]
 edition = "2018"
