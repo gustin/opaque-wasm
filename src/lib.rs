@@ -53,7 +53,7 @@ pub struct QrCode {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthToken {
-    pub token: String,
+    pub auth_token: String,
 }
 
 #[wasm_bindgen]
@@ -402,7 +402,7 @@ pub async fn authenticate(username: String, password: String) -> String {
     log!("{:?}", j_string.as_string().unwrap());
 
     let result: AuthToken = json.into_serde().unwrap();
-    result.token
+    result.auth_token
 }
 
 #[wasm_bindgen]
