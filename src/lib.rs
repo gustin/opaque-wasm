@@ -11,8 +11,8 @@ use futures::{future, Future};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
 use js_sys::{Promise, JSON};
-use opaque::*;
 use opaque::sigma::KeyExchange;
+use opaque::*;
 use rand_os::OsRng;
 use serde::{Deserialize, Serialize};
 use sha2::Sha512;
@@ -43,7 +43,17 @@ pub struct AuthData {
     pub v: [u8; 32],
     pub envelope: Vec<u8>,
     pub key: Vec<u8>,
-    pub y: [u8; 32]
+    pub y: [u8; 32],
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QrCode {
+    pub qr_code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthToken {
+    pub token: String,
 }
 
 #[wasm_bindgen]
@@ -53,10 +63,6 @@ pub fn setup() {
 
 #[wasm_bindgen]
 pub async fn register(username: String, password: String) {
-    // opaque client code, call function in lib for now
-    // client_registration_values
-    // then package and post to a url
-
     // => Registration 1
     let mut cspring = OsRng::new().unwrap();
     let keypair: Keypair = Keypair::generate(&mut cspring);
@@ -68,17 +74,6 @@ pub async fn register(username: String, password: String) {
     let hash_prime =
         RistrettoPoint::hash_from_bytes::<Sha3_512>(password.as_bytes());
     let alpha_point: RistrettoPoint = hash_prime * r;
-
-    //1. call registration 1 on a route with values
-    // POST: /authenticate/
-    // username
-    // alpha
-    // sign eventually?
-    //    let (beta, v, pub_s) =
-    //        registration_1(username, &alpha.compress().to_bytes());
-
-    // POST username/alpha to http://localhost:8000/authenticate
-
     let alpha = alpha_point.compress().to_bytes();
 
     let mut opts = RequestInit::new();
@@ -156,10 +151,7 @@ pub async fn register(username: String, password: String) {
     let payload: Vec<u8> = bincode::serialize(&envelope).unwrap();
     let env_cipher = aead.encrypt(&nonce, payload.as_slice()).unwrap();
 
-    log!(
-        "-) AuthEnv: AES-GCM-SIV Cipher Envelope {:?} :",
-        env_cipher
-    );
+    log!("-) AuthEnv: AES-GCM-SIV Cipher Envelope {:?} :", env_cipher);
 
     // serialize from struct for safety
     let body = format!(
@@ -195,7 +187,7 @@ pub async fn register(username: String, password: String) {
 }
 
 #[wasm_bindgen]
-pub async fn authenticate(username: String, password: String) {
+pub async fn authenticate(username: String, password: String) -> String {
     //**
     // => Authentication 1
     let mut cspring = OsRng::new().unwrap();
@@ -309,7 +301,6 @@ pub async fn authenticate(username: String, password: String) {
     log!("-) encryption key 32-byte {:?}:", encryption_key_a);
     log!("-) nonce 96 bit {:?}:", nonce_a);
 
-
     let envelope_decrypted = aead
         .decrypt(&nonce_a, result.envelope.as_slice())
         .expect("decryption failure");
@@ -377,7 +368,7 @@ pub async fn authenticate(username: String, password: String) {
     // { infoA, A, sigA(nB, sidA, g^x, infoA, infoA), MAC kM(A)} Ke
 
     //    let (beta_a, v_a, envelope_a) =
-     //       authenticate_2(username, &alpha_a);
+    //       authenticate_2(username, &alpha_a);
     let mut opts = RequestInit::new();
     opts.method("POST");
     opts.mode(RequestMode::Cors);
@@ -410,7 +401,40 @@ pub async fn authenticate(username: String, password: String) {
     let j_string = JSON::stringify(&json).unwrap();
     log!("{:?}", j_string.as_string().unwrap());
 
+    let result: AuthToken = json.into_serde().unwrap();
+    result.token
+}
 
+#[wasm_bindgen]
+pub async fn second_factor(username: String) -> String {
+    let mut opts = RequestInit::new();
+    opts.method("POST");
+    opts.mode(RequestMode::Cors);
+    let body = format!(
+        r#"
+        {{
+            "username": "{}"
+        }}
+        "#,
+        username
+    );
+    opts.body(Some(&JsValue::from_str(&body)));
+
+    let request = Request::new_with_str_and_init(
+        "http://localhost:8000/plaintext/authenticate/second_factor",
+        &opts,
+    )
+    .unwrap();
+
+    let window = web_sys::window().unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
+
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
+    let result: QrCode = json.into_serde().unwrap();
+    result.qr_code
 }
 
 #[cfg(test)]
