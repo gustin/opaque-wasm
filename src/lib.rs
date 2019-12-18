@@ -96,7 +96,7 @@ pub async fn register(username: String, password: String) {
     opts.body(Some(&JsValue::from_str(&body)));
 
     let request = Request::new_with_str_and_init(
-        "http://localhost:8000/register/start",
+        "http://localhost:8000/plaintext/register/start",
         &opts,
     )
     .unwrap();
@@ -178,7 +178,7 @@ pub async fn register(username: String, password: String) {
     opts.body(Some(&JsValue::from_str(&body)));
 
     let request = Request::new_with_str_and_init(
-        "http://localhost:8000/register/finalize",
+        "http://localhost:8000/plaintext/register/finalize",
         &opts,
     )
     .unwrap();
@@ -236,7 +236,7 @@ pub async fn authenticate(username: String, password: String) {
 
     log!("====> Authentication Start");
     let request = Request::new_with_str_and_init(
-        "http://localhost:8000/authenticate/start",
+        "http://localhost:8000/plaintext/authenticate/start",
         &opts,
     )
     .unwrap();
@@ -394,7 +394,7 @@ pub async fn authenticate(username: String, password: String) {
     opts.body(Some(&JsValue::from_str(&body)));
 
     let request = Request::new_with_str_and_init(
-        "http://localhost:8000/authenticate/finalize",
+        "http://localhost:8000/plaintext/authenticate/finalize",
         &opts,
     )
     .unwrap();
