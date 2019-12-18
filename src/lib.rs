@@ -52,13 +52,12 @@ pub fn setup() {
 }
 
 #[wasm_bindgen]
-pub async fn registration_init(username: String, password: String) {
+pub async fn register(username: String, password: String) {
     // opaque client code, call function in lib for now
     // client_registration_values
     // then package and post to a url
 
     // => Registration 1
-
     let mut cspring = OsRng::new().unwrap();
     let keypair: Keypair = Keypair::generate(&mut cspring);
 
@@ -193,9 +192,17 @@ pub async fn registration_init(username: String, password: String) {
 
     let j_string = JSON::stringify(&json).unwrap();
     log!("{:?}", j_string.as_string().unwrap());
+}
 
+#[wasm_bindgen]
+pub async fn authenticate(username: String, password: String) {
     //**
     // => Authentication 1
+    let mut cspring = OsRng::new().unwrap();
+    let keypair: Keypair = Keypair::generate(&mut cspring);
+
+    let priv_u = keypair.secret.to_bytes();
+    let pub_u = keypair.public.to_bytes();
 
     log!("Starting Authentication...");
 
@@ -304,7 +311,7 @@ pub async fn registration_init(username: String, password: String) {
 
 
     let envelope_decrypted = aead
-        .decrypt(&nonce, result.envelope.as_slice())
+        .decrypt(&nonce_a, result.envelope.as_slice())
         .expect("decryption failure");
     let envelope_for_realz: Envelope =
         bincode::deserialize(envelope_decrypted.as_slice()).unwrap();
