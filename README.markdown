@@ -15,3 +15,8 @@ This needs to run on nightly to force clear_on_drop to not use cc compiler for w
   rustup toolchain install nightly
   rustup override set nightly
 
+## Copyright
+
+    go get -u github.com/fbiville/headache/cmd/headache
+    headache
+

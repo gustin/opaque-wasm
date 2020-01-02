@@ -1,3 +1,11 @@
+/*
+ * Copyright 2019 Plaintext, LLC - All Rights Reserved
+ *
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
+ * Proprietary and confidential.
+ *
+ */
+
 use wasm_bindgen::prelude::*;
 
 use aes_gcm_siv::aead::{generic_array::GenericArray, Aead, NewAead, Payload};
