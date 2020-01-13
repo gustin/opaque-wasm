@@ -4,6 +4,10 @@
 
 # Packing
 
+    wasm-pack build --no-typescript --dev --target web --scope plaintext --out-name sdk
+
+or
+
     ./scripts/pack-it.sh
 
   Reference to 'wasm-pack' build options: https://rustwasm.github.io/docs/wasm-pack/commands/build.html

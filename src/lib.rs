@@ -3,8 +3,7 @@
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  * Proprietary and confidential.
- *
- */
+ * */
 
 use wasm_bindgen::prelude::*;
 
@@ -57,6 +56,11 @@ pub struct AuthData {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QrCode {
     pub qr_code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Confirmation {
+    pub confirmed: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -414,7 +418,7 @@ pub async fn authenticate(username: String, password: String) -> String {
 }
 
 #[wasm_bindgen]
-pub async fn second_factor(username: String) -> String {
+pub async fn generate_second_factor(username: String) -> String {
     let mut opts = RequestInit::new();
     opts.method("POST");
     opts.mode(RequestMode::Cors);
@@ -429,7 +433,7 @@ pub async fn second_factor(username: String) -> String {
     opts.body(Some(&JsValue::from_str(&body)));
 
     let request = Request::new_with_str_and_init(
-        "http://localhost:8000/plaintext/authenticate/second_factor",
+        "http://localhost:8000/plaintext/authenticate/generate_second_factor",
         &opts,
     )
     .unwrap();
@@ -443,6 +447,39 @@ pub async fn second_factor(username: String) -> String {
     let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
     let result: QrCode = json.into_serde().unwrap();
     result.qr_code
+}
+
+#[wasm_bindgen]
+pub async fn confirm_second_factor(username: String, code: String) -> bool {
+    let mut opts = RequestInit::new();
+    opts.method("POST");
+    opts.mode(RequestMode::Cors);
+    let body = format!(
+        r#"
+        {{
+            "username": "{}",
+            "code": "{}"
+        }}
+        "#,
+        username, code
+    );
+    opts.body(Some(&JsValue::from_str(&body)));
+
+    let request = Request::new_with_str_and_init(
+        "http://localhost:8000/plaintext/authenticate/confirm_second_factor",
+        &opts,
+    )
+    .unwrap();
+
+    let window = web_sys::window().unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
+
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
+    let result: Confirmation = json.into_serde().unwrap();
+    result.confirmed
 }
 
 #[cfg(test)]
