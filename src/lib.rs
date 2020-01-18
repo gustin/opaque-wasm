@@ -5,8 +5,6 @@
  * Proprietary and confidential.
  * */
 
-use wasm_bindgen::prelude::*;
-
 use aes_gcm_siv::aead::{generic_array::GenericArray, Aead, NewAead, Payload};
 use aes_gcm_siv::Aes256GcmSiv;
 use bincode::{deserialize, serialize};
@@ -30,6 +28,8 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
+
+mod webauthn;
 
 macro_rules! log {
     ( $( $t:tt )* ) => {
@@ -482,7 +482,9 @@ pub async fn confirm_second_factor(username: String, code: String) -> bool {
     result.confirmed
 }
 
-#[cfg(test)]
+
+
+
 mod tests {
     #[test]
     fn it_works() {
