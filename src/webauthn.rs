@@ -21,7 +21,7 @@ pub struct Challenge {
 
 
 #[wasm_bindgen]
-pub async fn registration_challenge(username: String) -> String {
+pub async fn webauthn_registration_challenge(username: String) -> String {
     let mut opts = RequestInit::new();
     opts.method("POST");
     opts.mode(RequestMode::Cors);
