@@ -482,9 +482,6 @@ pub async fn confirm_second_factor(username: String, code: String) -> bool {
     result.confirmed
 }
 
-
-
-
 mod tests {
     #[test]
     fn it_works() {

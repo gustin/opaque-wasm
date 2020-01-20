@@ -19,6 +19,10 @@ pub struct Challenge {
     pub challenge: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Confirmation {
+    pub valid: bool,
+}
 
 #[wasm_bindgen]
 pub async fn webauthn_registration_challenge(username: String) -> String {
@@ -38,8 +42,8 @@ pub async fn webauthn_registration_challenge(username: String) -> String {
     let request = Request::new_with_str_and_init(
         "http://localhost:8000/plaintext/webauthn/registration_challenge",
         &opts,
-        )
-        .unwrap();
+    )
+    .unwrap();
 
     let window = web_sys::window().unwrap();
     let resp_value = JsFuture::from(window.fetch_with_request(&request))
@@ -49,9 +53,44 @@ pub async fn webauthn_registration_challenge(username: String) -> String {
     let resp: Response = resp_value.dyn_into().unwrap();
     let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
     let result: Challenge = json.into_serde().unwrap();
-    log!("{:?}",  result.challenge);
+    log!("{:?}", result.challenge);
     result.challenge
 }
 
+#[wasm_bindgen]
+pub async fn webauthn_register_credential(
+    username: String,
+    credential: String,
+) -> bool {
+    let mut opts = RequestInit::new();
+    opts.method("POST");
+    opts.mode(RequestMode::Cors);
+    let body = format!(
+        r#"
+        {{
+            "username": "{}",
+            "credential": "{}"
+        }}
+        "#,
+        username, credential
+    );
+    opts.body(Some(&JsValue::from_str(&body)));
 
-// let value:  = serde_wasm_bindgen::from_value(value)?;
+    let request = Request::new_with_str_and_init(
+        "http://localhost:8000/plaintext/webauthn/register_credential",
+        &opts,
+    )
+    .unwrap();
+
+    let window = web_sys::window().unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .unwrap();
+
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let json = JsFuture::from(resp.json().unwrap()).await.unwrap();
+    let result: Confirmation = json.into_serde().unwrap();
+    log!("{:?}", result.valid);
+    result.valid
+}
+
