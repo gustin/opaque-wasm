@@ -93,4 +93,3 @@ pub async fn webauthn_register_credential(
     log!("{:?}", result.valid);
     result.valid
 }
-
