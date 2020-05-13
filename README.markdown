@@ -19,6 +19,15 @@ This needs to run on nightly to force clear_on_drop to not use cc compiler for w
   rustup toolchain install nightly
   rustup override set nightly
 
+## WASM
+
+    rustup target add wasm32-unknown-unknown
+
+    cargo check --target wasm32-unknown-unknown
+
+    cargo build --target wasm32-unknown-unknown
+
+
 ## Copyright
 
     go get -u github.com/fbiville/headache/cmd/headache
